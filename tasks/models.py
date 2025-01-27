@@ -16,7 +16,7 @@ class Task(models.Model):
     description = models.TextField()
     completed = models.BooleanField(default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tasks')
-    labels = models.ManyToManyField(Label)
+    labels = models.ManyToManyField(Label, related_name='tasks')
 
     def mark_completed(self):
         self.completed = True
@@ -24,6 +24,10 @@ class Task(models.Model):
     def mark_incomplete(self):
         self.completed = False
         self.save()
+    def validate_label(self, label):
+        user = self.context['request'].user
+        if not all(label.owner == user for label in self.labels.all()):
+            raise ValueError("Invalid label")
     def __str__(self):
         return self.title
 

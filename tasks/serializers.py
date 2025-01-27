@@ -12,11 +12,19 @@ class LabelSerializer(serializers.ModelSerializer):
         return value
 
 class TaskSerializer(serializers.ModelSerializer):
-    labels = LabelSerializer(many=True, read_only=True)
+    labels = serializers.PrimaryKeyRelatedField(many=True, queryset=Label.objects.all())
     class Meta:
         model = Task
         fields = ['id', 'title', 'description', 'completed', 'owner', 'labels']
         read_only_fields = ['owner']
+    def update(self, instance, validated_data):
+        labels = validated_data.pop('labels')
+        if labels is not None:
+            instance.labels.set(labels)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
